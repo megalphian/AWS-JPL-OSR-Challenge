@@ -27,6 +27,8 @@ Overview Video:
 
 4. [Help and support](#help)
 
+5. [Running locally with Docker](#docker)
+
 
 ## <a name="whatis"> What is the Challenge?<a/>
 
@@ -216,7 +218,26 @@ If you believe they are warranted, you are free to add additional global variabl
 
 slack channel:  [awsjplroverchallenge.slack.com](https://awsjplroverchallenge.slack.com/)
 
+## <a name="docker">Running locally with Docker</a>
 
+```
+git clone https://github.com/joebarbere/AWS-JPL-OSR-Challenge.git
+cd AWS-JPL-OSR-Challenge
+git checkout docker
+docker build -t awsjpl .
+docker run -p 5900:5900 -p 9000:9000 -p 6080:80 -p 5601:5601 -v /home/yourusername/GitHub/AWS-JPL-OSR-Challenge/volumes/minio:/data --gpus all awsjpl
+firefox http://localhost:6080
+```
+Open a terminal in the VNC tab
+
+```
+cd /home/ubuntu/catkin_ws/src/
+./run
+```
+
+* vnc - http://localhost:6080
+* minio (minio/miniokey) - http://localhost:9000
+* kibana - http://localhost:5601
 
 
 

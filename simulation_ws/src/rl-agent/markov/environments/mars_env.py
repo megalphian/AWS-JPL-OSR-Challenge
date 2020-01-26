@@ -24,6 +24,11 @@ from std_msgs.msg import String
 from PIL import Image
 import queue
 
+# logging to ELK
+import logging
+import logstash
+elk_logger = logging.getLogger('python-logstash-logger')
+elk_logger.addHandler(logstash.LogstashHandler('localhost', 5959, version=1))
 
 VERSION = "0.0.1"
 TRAINING_IMAGE_WIDTH = 160
@@ -298,15 +303,21 @@ class MarsEnv(gym.Env):
         else:
             avg_imu = 0
     
-        print('Step:%.2f' % self.steps,
-              'Steering:%f' % action[0],
-              'R:%.2f' % reward,                                # Reward
-              'DTCP:%f' % self.current_distance_to_checkpoint,  # Distance to Check Point
-              'DT:%f' % self.distance_travelled,                # Distance Travelled
-              'CT:%.2f' % self.collision_threshold,             # Collision Threshold
-              'CTCP:%f' % self.closer_to_checkpoint,            # Is closer to checkpoint
-              'PSR: %f' % self.power_supply_range,              # Steps remaining in Episode
-              'IMU: %f' % avg_imu)
+        try:
+            extra = {
+                'Step': self.steps,
+                'Steering': action[0],
+                'R': reward,
+                'DTCP': self.current_distance_to_checkpoint,
+                'DT': self.distance_travelled,
+                'CT': self.collision_threshold,
+                'CTCP': self.closer_to_checkpoint,
+                'PSR': self.power_supply_range,
+                'IMU': avg_imu
+            }
+            elk_logger.info('reward_function', extra=extra)
+        except Exception as err:
+            print("logging error: {}".format(err))
 
         self.reward = reward
         self.done = done
@@ -562,28 +573,12 @@ class MarsEnv(gym.Env):
     '''
     def send_reward_to_cloudwatch(self, reward):
         try:
-            session = boto3.session.Session()
-            cloudwatch_client = session.client('cloudwatch', region_name=self.aws_region)
-            cloudwatch_client.put_metric_data(
-                MetricData=[
-                    {
-                        'MetricName': 'Episode_Reward',
-                        'Unit': 'None',
-                        'Value': reward
-                    },
-                    {
-                        'MetricName': 'Episode_Steps',
-                        'Unit': 'None',
-                        'Value': self.steps,
-                    },
-                    {
-                        'MetricName': 'DistanceToCheckpoint',
-                        'Unit': 'None',
-                        'Value': self.current_distance_to_checkpoint
-                    }
-                ],
-                Namespace='AWS_NASA_JPL_OSR_Challenge'
-            )
+            extra = {
+                'Episode_Reward': reward,
+                'Episode_Steps': self.steps,
+                'DistanceToCheckpoint': self.current_distance_to_checkpoint
+            }
+            elk_logger.info('episodic_rewards', extra=extra)
         except Exception as err:
             print("Error in the send_reward_to_cloudwatch function: {}".format(err))
 
