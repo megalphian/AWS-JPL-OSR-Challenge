@@ -23,6 +23,7 @@ from std_msgs.msg import Float64
 from std_msgs.msg import String
 from PIL import Image
 import queue
+from std_srvs.srv import Empty
 
 # logging to ELK
 import logging
@@ -189,6 +190,7 @@ class MarsEnv(gym.Env):
         speed.angular.z = steering
         self.ack_publisher.publish(speed)
 
+    self.reset_models = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
     '''
     DO NOT EDIT - Function to reset the rover to the starting point in the world
@@ -242,8 +244,9 @@ class MarsEnv(gym.Env):
         # Angle to reset joints to
         joint_positions_list = [0 for _ in range(len(joint_names_list))]
 
-        self.gazebo_model_state_service(model_state)
+        # self.gazebo_model_state_service(model_state)
         self.gazebo_model_configuration_service(model_name='rover', urdf_param_name='rover_description', joint_names=joint_names_list, joint_positions=joint_positions_list)
+        self.reset_models()
 
         self.last_collision_threshold = sys.maxsize
         self.last_position_x = self.x
