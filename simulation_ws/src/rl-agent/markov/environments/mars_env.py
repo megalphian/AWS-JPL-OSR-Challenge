@@ -137,6 +137,8 @@ class MarsEnv(gym.Env):
         # IMU Sensors
         rospy.Subscriber('/imu/wheel_lb', Imu, self.callback_wheel_lb)
 
+        # Broken rover reset fix from: https://github.com/crr0004/AWS-JPL-OSR-Challenge
+        self.reset_models = rospy.ServiceProxy('/gazebo/reset_world', Empty)
 
 
     '''
@@ -189,8 +191,7 @@ class MarsEnv(gym.Env):
         speed.linear.x = throttle
         speed.angular.z = steering
         self.ack_publisher.publish(speed)
-
-    self.reset_models = rospy.ServiceProxy('/gazebo/reset_world', Empty)
+    
 
     '''
     DO NOT EDIT - Function to reset the rover to the starting point in the world
