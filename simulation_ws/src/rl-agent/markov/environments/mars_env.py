@@ -418,10 +418,10 @@ class MarsEnv(gym.Env):
         WAYPOINT_3_REWARD = 3000
 
         reward = 0
-        base_reward = 2
+        failure_reward = -50
+        base_reward = 20
         multiplier = 0
         done = False
-        
         
         if self.steps > 0:
             
@@ -431,17 +431,17 @@ class MarsEnv(gym.Env):
             # Has LIDAR registered a hit
             if self.collision_threshold <= CRASH_DISTANCE:
                 print("Rover has sustained sideswipe damage")
-                return 0, True # No reward
+                return failure_reward, True # No reward
             
             # Have the gravity sensors registered too much G-force
             if self.collision:
                 print("Rover has collided with an object")
-                return 0, True # No reward
+                return failure_reward, True # No reward
             
             # Has the rover reached the max steps
             if self.power_supply_range < 1:
                 print("Rover's power supply has been drained (MAX Steps reached)")
-                return 0, True # No reward
+                return failure_reward, True # No reward
             
             # Has the Rover reached the destination
             if self.at_destination():
@@ -453,12 +453,12 @@ class MarsEnv(gym.Env):
             # If it has not reached the check point is it still on the map?
             if self.x < (GUIDERAILS_X_MIN - .45) or self.x > (GUIDERAILS_X_MAX + .45):
                 print("Rover has left the mission map!")
-                return 0, True
+                return failure_reward, True
                 
                 
             if self.y < (GUIDERAILS_Y_MIN - .45) or self.y > (GUIDERAILS_Y_MAX + .45):
                 print("Rover has left the mission map!")
-                return 0, True
+                return failure_reward, True
             
             
             # No Episode ending events - continue to calculate reward
